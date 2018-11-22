@@ -8,7 +8,7 @@ from Tkinter import *
 from orchestrator import Orchestrator
 
 
-class HuskApp:
+class BalletApp:
     def __init__(self, master):
         """
         Constructor for the GUI app
@@ -66,5 +66,5 @@ def setup_root():
 
 if __name__ == "__main__":
     root = setup_root()
-    my_gui = HuskApp(root)
+    my_gui = BalletApp(root)
     root.mainloop()
