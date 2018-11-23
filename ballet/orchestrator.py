@@ -36,15 +36,25 @@ class Orchestrator:
         Establish fabric SSH connections to all of the domains
         @return: list - fabric ssh connection
         """
-        return [
+        if self.password:
+            return [
             settings(
                 host_string="{}@{}".format(self.username, domain),
                 disable_known_hosts=self.disable_known_hosts,
                 key_filename=self.keyfile,
-                password=self.password,
+                password=self.password
             )
             for domain in self.domains
         ]
+        else:
+            return [
+                settings(
+                    host_string="{}@{}".format(self.username, domain),
+                    disable_known_hosts=self.disable_known_hosts,
+                    key_filename=self.keyfile,
+                )
+                for domain in self.domains
+            ]
 
     def mp_connections(self):
         """
