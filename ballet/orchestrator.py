@@ -3,11 +3,9 @@
 
 @date 2018
 
-
+Orchestrates multiple SSH sessions on multiple hosts with a single object.
 """
-import multiprocessing
-from fabric.api import settings
-
+from fabric.connection import Connection
 
 
 class Orchestrator:
@@ -23,51 +21,37 @@ class Orchestrator:
         @param disable_known_hosts: bool
         @param password: str - password to use if challenged on login
         """
-        self.keyfile = keyfile
         self.username = username
         self.domains = domains
         self.disable_known_hosts = disable_known_hosts
-        self.password = password
-        self.connections = self.__establish_connections()
+        self.connect_kwargs = {"key_filename": keyfile}
+        if password is not None:
+            self.connect_kwargs["password"] = password
+        self.connections = self.establish_connections()
 
 
-    def __establish_connections(self):
+    def establish_connections(self, port=22):
         """
-        Establish fabric SSH connections to all of the domains
-        @return: list - fabric ssh connection
+        Establish the SSH connections as fabric connection objects
+        @param port: int - port to connect on, default ssh port 22
+        @return: list - fabric Connection objects
         """
-        if self.password:
-            return [
-            settings(
-                host_string="{}@{}".format(self.username, domain),
-                disable_known_hosts=self.disable_known_hosts,
-                key_filename=self.keyfile,
-                password=self.password
-            )
-            for domain in self.domains
-        ]
-        else:
-            return [
-                settings(
-                    host_string="{}@{}".format(self.username, domain),
-                    disable_known_hosts=self.disable_known_hosts,
-                    key_filename=self.keyfile,
+        return [
+            Connection(
+                host="{user}@{domain}:{port}".format(
+                    user=self.username,
+                    domain=domain,
+                    port=port
                 )
-                for domain in self.domains
-            ]
+            ) for domain in self.domains
+        ]
 
-    def mp_connections(self):
+    def open_connections(self):
         """
 
         @return:
         """
-        return [
-            multiprocessing.Process(
-                target=connection,
-                args=()
-            )
-            for connection in self.connections
-        ]
+        [connection.open() for connection in self.connections]
 
 
     def run_command(self, command):
@@ -75,5 +59,5 @@ class Orchestrator:
         Run command on all connections
         @param command: str - command to run over all connections
         """
-        for connection in self.connections:
-            print(connection.run(command))
+        print([connection.run(command) for connection in self.connections])
+
